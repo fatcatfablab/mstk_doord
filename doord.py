@@ -48,7 +48,13 @@ doord  =  Doord(secrets_path,secrets_file)
 
 @app.route('/login', methods = ['GET', 'POST'])
 def accept_card_uid():
+   debugfile = open("/var/log/doorbotdebug.txt", "a"); # XlogicX debugging
+   currenttime  = time.strftime("%H:%M:%S") # XlogicX debugging
+   debugfile.write('{}: Accepting Card UID\n'.format(currenttime)) # XlogicX debugging
+
    if request.method == 'POST':
+      debugfile.write('{}: Post'.format(currenttime)) # XlogicX debugging
+
       if api_key_enabled == 'True':
          try:
             received_apikey = request.form['apikey']
@@ -68,7 +74,7 @@ def accept_card_uid():
          access_point['dev']
          access_point['cmd']
       except:
-         debug_message(log_level,0, "misconfigured accesspoint %s" % str(access_pointp['id']))
+         #debug_message(log_level,0, "misconfigured accesspoint %s" % str(access_pointp['id']))
          error_code = 'x30'
          requesting_ap.update({
             "error_code":str(error_code)
@@ -94,10 +100,15 @@ def accept_card_uid():
             return str('{"access":"0"}')
          today = time.strftime("%m/%d/%Y")
          currenttime  = time.strftime("%H:%M:%S")
-         if access_request['display_name'] != "Unknown Card":
-            doord.logsearch(today,access_request['display_name'],access_request['access'],doord.slack_channel)
+         if access_request['display_name'] != "Unknown Card":           
             logfile = open(doord.accesslogfile, "a");
             logfile.write("%s,%s,%s,%s\n" % (str(today), str(currenttime), str(access_request['display_name']), access_request['access']))
+            try:
+              doord.logsearch(today,access_request['display_name'],access_request['access'],doord.slack_channel)
+              #doord.logsearchbeta(today,access_request['display_name'],access_request['access'],doord.slack_channel) XlogicX
+            except Exception as e:
+              logfile.write(str(e))
+              logfile.write("\n")
             logfile.close()
          else:
             # send to private card_reader slack channel to help admin provision cards
